@@ -2,104 +2,110 @@ import 'package:flutter/material.dart';
 import 'calculator.dart';
 
 class CalculatorWidget extends StatefulWidget {
-  const CalculatorWidget({Key? key}) : super(key: key);
-
   @override
-  State<CalculatorWidget> createState() => _CalculatorWidgetState();
+  _CalculatorWidgetState createState() => _CalculatorWidgetState();
 }
 
 class _CalculatorWidgetState extends State<CalculatorWidget> {
-  final TextEditingController _c1 = TextEditingController();
-  final TextEditingController _c2 = TextEditingController();
-  final Calculator calc = Calculator();
-
-  String result = '';
+  final TextEditingController firstController = TextEditingController();
+  final TextEditingController secondController = TextEditingController();
+  double? result;
 
   void calculate(String operation) {
-    final a = double.tryParse(_c1.text);
-    final b = double.tryParse(_c2.text);
+    final double? first = double.tryParse(firstController.text);
+    final double? second = double.tryParse(secondController.text);
 
-    if (a == null || b == null) {
+    if (first == null || second == null) {
       setState(() {
-        result = 'Невірне число';
+        result = null;
       });
       return;
     }
 
     try {
+      final calc = Calculator();
       double res;
+
       switch (operation) {
         case '+':
-          res = calc.add(a, b);
+          res = calc.add(first, second);
           break;
         case '-':
-          res = calc.subtract(a, b);
+          res = calc.subtract(first, second);
           break;
         case '*':
-          res = calc.multiply(a, b);
+          res = calc.multiply(first, second);
           break;
         case '/':
-          res = calc.divide(a, b);
+          res = calc.divide(first, second); // 🔥 тут буде помилка при 0
           break;
         default:
-          res = 0;
+          return;
       }
 
       setState(() {
-        result = 'Результат: $res';
+        result = res;
       });
     } catch (e) {
       setState(() {
-        result = e.toString();
+        result = null;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Калькулятор')),
+      appBar: AppBar(title: Text('Calculator')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
-              controller: _c1,
-              decoration: const InputDecoration(labelText: 'Число 1'),
+              key: Key('firstNumber'),
+              controller: firstController,
               keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'First number'),
             ),
+            SizedBox(height: 8),
             TextField(
-              controller: _c2,
-              decoration: const InputDecoration(labelText: 'Число 2'),
+              key: Key('secondNumber'),
+              controller: secondController,
               keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'Second number'),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
               children: [
                 ElevatedButton(
+                  key: Key('addButton'),
                   onPressed: () => calculate('+'),
-                  child: const Text('+'),
+                  child: Text('+'),
                 ),
                 ElevatedButton(
+                  key: Key('subtractButton'),
                   onPressed: () => calculate('-'),
-                  child: const Text('-'),
+                  child: Text('-'),
                 ),
                 ElevatedButton(
+                  key: Key('multiplyButton'),
                   onPressed: () => calculate('*'),
-                  child: const Text('×'),
+                  child: Text('*'),
                 ),
                 ElevatedButton(
+                  key: Key('divideButton'),
                   onPressed: () => calculate('/'),
-                  child: const Text('÷'),
+                  child: Text('/'),
                 ),
               ],
             ),
-            const SizedBox(height: 32),
-            Text(
-              result,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            SizedBox(height: 16),
+            Text('Result: ${result ?? '-'}', key: Key('result')),
           ],
         ),
       ),
